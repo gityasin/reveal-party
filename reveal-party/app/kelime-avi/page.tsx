@@ -98,7 +98,7 @@ export default function WordHuntPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-10">
-      <div className="w-full max-w-5xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
+      <div className="w-full max-w-4xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Kelime Avı</h1>
@@ -114,66 +114,77 @@ export default function WordHuntPage() {
           </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-          <div className="order-2 lg:order-1">
-            <div className="mt-4 rounded-2xl border border-zinc-200 p-4 text-sm dark:border-white/10">
-              <p className="font-semibold">Durum</p>
-              <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-                {lastMessage || "Bir harfe dokun, sonra ikinci harfi seç."}
-              </p>
+        <div className="mt-6">
+          <div className="mx-auto w-full max-w-[520px]">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                  Durum
+                </p>
+                <p className="mt-1 font-semibold text-zinc-900 dark:text-white">
+                  {lastMessage || "Seçim yap"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                  Bulunan
+                </p>
+                <p className="mt-1 font-semibold text-zinc-900 dark:text-white">
+                  {foundWords.size} / {visibleWords.length}
+                </p>
+              </div>
+              <div className="hidden rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-white/10 dark:bg-white/5 sm:block">
+                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                  İpucu
+                </p>
+                <p className="mt-1 font-semibold text-zinc-900 dark:text-white">
+                  Parmağınla sürükle
+                </p>
+              </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-white/5">
-              <p className="font-semibold">Bulunan</p>
-              <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-                {foundWords.size} / {visibleWords.length}
-              </p>
-            </div>
-          </div>
+            <div className="mt-5">
+              <WordHuntGrid
+                grid={puzzle.grid}
+                size={puzzle.size}
+                selected={selected}
+                foundCells={found}
+                targetCells={targetCells}
+                onStart={(cell) => {
+                  if (showName) return;
+                  sfxTap();
+                  setDragging(true);
+                  setSelected([cell]);
+                }}
+                onMove={(cell) => {
+                  if (!dragging) return;
+                  setSelected((prev) => {
+                    const current = prev ?? [];
+                    const last = current[current.length - 1];
+                    if (!last) return [cell];
+                    if (last.row === cell.row && last.col === cell.col) return current;
 
-          <div className="order-1 lg:order-2">
-            <div className="mx-auto w-full max-w-[520px]">
-            <WordHuntGrid
-              grid={puzzle.grid}
-              size={puzzle.size}
-              selected={selected}
-              foundCells={found}
-              targetCells={targetCells}
-              onStart={(cell) => {
-                if (showName) return;
-                sfxTap();
-                setDragging(true);
-                setSelected([cell]);
-              }}
-              onMove={(cell) => {
-                if (!dragging) return;
-                setSelected((prev) => {
-                  const current = prev ?? [];
-                  const last = current[current.length - 1];
-                  if (!last) return [cell];
-                  if (last.row === cell.row && last.col === cell.col) return current;
-
-                  // backtrack one step
-                  if (current.length >= 2) {
-                    const before = current[current.length - 2]!;
-                    if (before.row === cell.row && before.col === cell.col) {
-                      return current.slice(0, -1);
+                    // backtrack one step
+                    if (current.length >= 2) {
+                      const before = current[current.length - 2]!;
+                      if (before.row === cell.row && before.col === cell.col) {
+                        return current.slice(0, -1);
+                      }
                     }
-                  }
 
-                  if (!isNeighbor(last, cell)) return current;
-                  // avoid loops
-                  if (current.some((c) => c.row === cell.row && c.col === cell.col)) return current;
-                  return [...current, cell];
-                });
-              }}
-              onEnd={() => {
-                setSelected((prev) => {
-                  finishSelection(prev);
-                  return prev;
-                });
-              }}
-            />
+                    if (!isNeighbor(last, cell)) return current;
+                    // avoid loops
+                    if (current.some((c) => c.row === cell.row && c.col === cell.col)) return current;
+                    return [...current, cell];
+                  });
+                }}
+                onEnd={() => {
+                  setSelected((prev) => {
+                    finishSelection(prev);
+                    return prev;
+                  });
+                }}
+              />
             </div>
           </div>
         </div>

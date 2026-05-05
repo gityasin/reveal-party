@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 type Cell = { row: number; col: number };
 
@@ -28,6 +28,40 @@ export function WordHuntGrid({
 }: Props) {
   const selectedSet = new Set((selected ?? []).map((c) => `${c.row}:${c.col}`));
   const draggingRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onMoveWindow = (e: PointerEvent) => {
+      if (!draggingRef.current) return;
+      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+      e.preventDefault();
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const btn = el?.closest?.("button[data-row][data-col]") as
+        | HTMLButtonElement
+        | null;
+      if (!btn) return;
+      const row = Number(btn.dataset.row);
+      const col = Number(btn.dataset.col);
+      if (Number.isFinite(row) && Number.isFinite(col)) onMove({ row, col });
+    };
+
+    const onEndWindow = (e: PointerEvent) => {
+      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      pointerIdRef.current = null;
+      onEnd();
+    };
+
+    window.addEventListener("pointermove", onMoveWindow, { passive: false });
+    window.addEventListener("pointerup", onEndWindow, { passive: false });
+    window.addEventListener("pointercancel", onEndWindow, { passive: false });
+    return () => {
+      window.removeEventListener("pointermove", onMoveWindow);
+      window.removeEventListener("pointerup", onEndWindow);
+      window.removeEventListener("pointercancel", onEndWindow);
+    };
+  }, [onEnd, onMove]);
 
   return (
     <div
@@ -35,30 +69,6 @@ export function WordHuntGrid({
       style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
       role="grid"
       aria-label="Kelime avı ızgarası"
-      onPointerMove={(e) => {
-        if (!draggingRef.current) return;
-        e.preventDefault();
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-        const btn = el?.closest?.("button[data-row][data-col]") as
-          | HTMLButtonElement
-          | null;
-        if (!btn) return;
-        const row = Number(btn.dataset.row);
-        const col = Number(btn.dataset.col);
-        if (Number.isFinite(row) && Number.isFinite(col)) onMove({ row, col });
-      }}
-      onPointerUp={() => {
-        draggingRef.current = false;
-        onEnd();
-      }}
-      onPointerCancel={() => {
-        draggingRef.current = false;
-        onEnd();
-      }}
-      onPointerLeave={() => {
-        draggingRef.current = false;
-        onEnd();
-      }}
     >
       {Array.from({ length: size * size }, (_, i) => {
         const row = Math.floor(i / size);
@@ -90,6 +100,7 @@ export function WordHuntGrid({
               e.preventDefault();
               (e.currentTarget as HTMLButtonElement).setPointerCapture?.(e.pointerId);
               draggingRef.current = true;
+              pointerIdRef.current = e.pointerId;
               onStart({ row, col });
             }}
             onTouchStart={(e) => e.preventDefault()}
