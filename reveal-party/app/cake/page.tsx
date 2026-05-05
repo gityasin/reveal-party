@@ -36,7 +36,7 @@ export default function CakePage() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-12">
-      <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
+      <div className="w-full max-w-4xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Pasta Oyunu</h1>
@@ -78,19 +78,21 @@ export default function CakePage() {
         </div>
 
         <div className="mt-6">
-          <CakeCircle
-            slices={slices}
-            revealed={revealed}
-            disabled={finished}
-            onReveal={(index) => {
-              setRevealed((prev) => {
-                if (prev[index]) return prev;
-                const next = [...prev];
-                next[index] = true;
-                return next;
-              });
-            }}
-          />
+          <div className="mx-auto w-full max-w-[520px]">
+            <CakeCircle
+              slices={slices}
+              revealed={revealed}
+              disabled={finished}
+              onReveal={(index) => {
+                setRevealed((prev) => {
+                  if (prev[index]) return prev;
+                  const next = [...prev];
+                  next[index] = true;
+                  return next;
+                });
+              }}
+            />
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

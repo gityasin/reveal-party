@@ -2,23 +2,24 @@
 
 import confetti from "canvas-confetti";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { WordHuntGrid } from "@/components/WordHuntGrid";
 import { normalizeWord, readWordFromGrid } from "@/lib/wordhunt/engine";
 import { WORDHUNT_TR_NAMES_12 } from "@/lib/wordhunt/puzzle";
+import { sfxFound, sfxTap, sfxWin } from "@/lib/sfx";
 
 type Cell = { row: number; col: number };
 
 export default function WordHuntPage() {
-  const router = useRouter();
   const puzzle = WORDHUNT_TR_NAMES_12;
   const [dragging, setDragging] = useState(false);
   const [selected, setSelected] = useState<Cell[] | null>(null);
   const [found, setFound] = useState<Set<string>>(() => new Set());
+  const [targetCells, setTargetCells] = useState<Set<string>>(() => new Set());
   const [foundWords, setFoundWords] = useState<Set<string>>(() => new Set());
   const [lastMessage, setLastMessage] = useState<string>("");
+  const [showName, setShowName] = useState(false);
 
   const visibleWords = useMemo(
     () => puzzle.wordsVisible.map(normalizeWord),
@@ -47,6 +48,8 @@ export default function WordHuntPage() {
       return;
     }
 
+    if (matched) sfxFound();
+
     setFound((prev) => {
       const next = new Set(prev);
       for (const c of cells) next.add(`${c.row}:${c.col}`);
@@ -59,14 +62,20 @@ export default function WordHuntPage() {
     }
 
     if (isTarget) {
+      sfxWin();
       confetti({
         particleCount: 160,
         spread: 90,
         origin: { y: 0.7 },
         colors: ["#38BDF8", "#0EA5E9", "#93C5FD", "#FFFFFF"],
       });
-      setLastMessage("Tebrikler! Sürpriz açılıyor...");
-      setTimeout(() => router.push("/reveal?kaynak=kelime-avi"), 700);
+      setTargetCells(() => {
+        const next = new Set<string>();
+        for (const c of cells) next.add(`${c.row}:${c.col}`);
+        return next;
+      });
+      setShowName(true);
+      setLastMessage("Tebrikler, ismi buldun!");
     }
 
     setTimeout(() => setSelected(null), 250);
@@ -79,7 +88,7 @@ export default function WordHuntPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Kelime Avı</h1>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              İsimleri bulmak için iki harf seç. Son sürpriz kelime gizli.
+              İsimleri seçerek bebeğin ismini bulun.
             </p>
           </div>
           <Link
@@ -108,12 +117,16 @@ export default function WordHuntPage() {
           </div>
 
           <div className="order-1 lg:order-2">
+            <div className="mx-auto w-full max-w-[520px]">
             <WordHuntGrid
               grid={puzzle.grid}
               size={puzzle.size}
               selected={selected}
               foundCells={found}
+              targetCells={targetCells}
               onStart={(cell) => {
+                if (showName) return;
+                sfxTap();
                 setDragging(true);
                 setSelected([cell]);
               }}
@@ -146,9 +159,38 @@ export default function WordHuntPage() {
                 });
               }}
             />
+            </div>
           </div>
         </div>
       </div>
+
+      {showName ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowName(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-white/10 dark:bg-zinc-950"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">
+              Tebrikler, ismi buldun!
+            </p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight">Kayra</p>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowName(false)}
+                className="inline-flex w-full items-center justify-center rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              >
+                Tamam
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
