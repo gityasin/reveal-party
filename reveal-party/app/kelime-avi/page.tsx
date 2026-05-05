@@ -2,12 +2,12 @@
 
 import confetti from "canvas-confetti";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { WordHuntGrid } from "@/components/WordHuntGrid";
 import { normalizeWord, readWordFromGrid } from "@/lib/wordhunt/engine";
 import { WORDHUNT_TR_NAMES_12 } from "@/lib/wordhunt/puzzle";
-import { sfxFound, sfxTap, sfxWin } from "@/lib/sfx";
+import { sfxFound, sfxInvalid, sfxTap, sfxWin } from "@/lib/sfx";
 
 type Cell = { row: number; col: number };
 
@@ -27,6 +27,20 @@ export default function WordHuntPage() {
   );
   const hiddenTarget = normalizeWord(puzzle.hiddenTarget);
 
+  useEffect(() => {
+    // Prevent page scroll while dragging on mobile.
+    if (!dragging) return;
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevTouchAction = body.style.touchAction;
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.touchAction = prevTouchAction;
+    };
+  }, [dragging]);
+
   const isNeighbor = (a: Cell, b: Cell) =>
     Math.abs(a.row - b.row) <= 1 &&
     Math.abs(a.col - b.col) <= 1 &&
@@ -43,6 +57,7 @@ export default function WordHuntPage() {
     const isTarget = w === hiddenTarget || rev === hiddenTarget;
 
     if (!matched && !isTarget) {
+      sfxInvalid();
       setLastMessage("Olmadı, tekrar dene.");
       setSelected(null);
       return;

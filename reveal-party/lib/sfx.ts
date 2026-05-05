@@ -36,3 +36,8 @@ export function sfxWin() {
   setTimeout(() => beep({ freq: 783.99, ms: 140, gain: 0.055, type: "sine" }), 200); // G5
 }
 
+export function sfxInvalid() {
+  beep({ freq: 220, ms: 90, gain: 0.05, type: "sawtooth" });
+  setTimeout(() => beep({ freq: 160, ms: 110, gain: 0.05, type: "sawtooth" }), 70);
+}
+

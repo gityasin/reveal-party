@@ -31,12 +31,13 @@ export function WordHuntGrid({
 
   return (
     <div
-      className="grid gap-1 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950"
+      className="grid touch-none select-none gap-1 rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950"
       style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
       role="grid"
       aria-label="Kelime avı ızgarası"
       onPointerMove={(e) => {
         if (!draggingRef.current) return;
+        e.preventDefault();
         const el = document.elementFromPoint(e.clientX, e.clientY);
         const btn = el?.closest?.("button[data-row][data-col]") as
           | HTMLButtonElement
@@ -91,11 +92,12 @@ export function WordHuntGrid({
               draggingRef.current = true;
               onStart({ row, col });
             }}
+            onTouchStart={(e) => e.preventDefault()}
             data-row={row}
             data-col={col}
             style={forcedStyle}
             className={[
-              "aspect-square w-full rounded-xl border text-center text-base font-semibold uppercase transition",
+              "aspect-square w-full rounded-xl border text-center text-base font-semibold uppercase transition touch-none",
               "border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-zinc-100",
               "dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10",
               isTarget
